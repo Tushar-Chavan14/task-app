@@ -1,7 +1,9 @@
 import mongoose from "mongoose";
 import validator from "validator";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 
-export const userModel = mongoose.model("users", {
+const userSchema = mongoose.Schema({
   name: {
     type: String,
     required: true,
@@ -10,6 +12,7 @@ export const userModel = mongoose.model("users", {
   email: {
     type: String,
     required: true,
+    unique: true,
     trim: true,
     lowercase: true,
     validate(value) {
@@ -35,4 +38,57 @@ export const userModel = mongoose.model("users", {
       }
     },
   },
+  tokens: [
+    {
+      token: {
+        type: String,
+        required: true,
+      },
+    },
+  ],
 });
+
+userSchema.methods.toJSON = function () {
+  const userObject = this.toObject();
+
+  delete userObject.password;
+  delete userObject.tokens;
+
+  return userObject;
+};
+
+userSchema.methods.genrateAuthToken = async function () {
+  const token = jwt.sign({ _id: this._id.toString() }, "secret");
+
+  this.tokens = this.tokens.concat({ token });
+
+  this.save();
+
+  return token;
+};
+
+userSchema.statics.findByCredential = async (email, password) => {
+  const user = await userModel.findOne({ email });
+
+  if (!user) {
+    throw new Error("unable to login");
+  }
+
+  const isMatch = await bcrypt.compare(password, user.password);
+
+  if (!isMatch) {
+    throw new Error("unable to login");
+  }
+
+  return user;
+};
+
+userSchema.pre("save", async function (next) {
+  if (this.isModified("password")) {
+    this.password = await bcrypt.hash(this.password, 8);
+  }
+
+  next();
+});
+
+export const userModel = mongoose.model("users", userSchema);

@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { userModel } from "../db/models/usersModel.js";
+import auth from "./middleware/auth.js";
 
 export const userRouter = Router();
 
@@ -8,21 +9,58 @@ userRouter.post("/users", async (req, res) => {
 
   try {
     await user.save();
-    res.status(201).send(user);
+    const token = await user.genrateAuthToken();
+    res.status(201).send({ user, token });
   } catch (e) {
     res.status(400).send(e);
   }
 });
 
-userRouter.get("/users", async (req, res) => {
+userRouter.post("/users/login", async (req, res) => {
+  const credential = req.body;
   try {
-    const users = await userModel.find({});
-    res.send(users);
+    const user = await userModel.findByCredential(
+      credential.email,
+      credential.password
+    );
+    const token = await user.genrateAuthToken();
+
+    res.send({ user, token });
   } catch (e) {
-    res.status(500).send(e);
+    res.status(400).send(e);
   }
 });
 
+userRouter.post("/users/logout", auth, async (req, res) => {
+  const user = req.user;
+
+  try {
+    user.tokens = user.tokens.filter((token) => {
+      return token.token !== req.token;
+    });
+
+    await user.save();
+
+    res.send();
+  } catch (e) {
+    res.sendStatus(500);
+  }
+});
+
+userRouter.post("/users/logoutall", auth, async (req, res) => {
+  const user = req.user;
+  try {
+    user.tokens = [];
+    await user.save();
+    res.send();
+  } catch (e) {
+    res.sendStatus(500);
+  }
+});
+
+userRouter.get("/users/me", auth, async (req, res) => {
+  res.send(req.user);
+});
 userRouter.get("/users/:id", async (req, res) => {
   const _id = req.params.id;
 
@@ -53,10 +91,18 @@ userRouter.patch("/users/:id", async (req, res) => {
   }
 
   try {
-    const updatedUser = await userModel.findByIdAndUpdate(id, data, {
-      new: true,
-      runValidators: true,
+    // const updatedUser = await userModel.findByIdAndUpdate(id, data, {
+    //   new: true,
+    //   runValidators: true,
+    // });
+
+    const updatedUser = await userModel.findById(id);
+    updates.forEach((update) => {
+      updatedUser[update] = data[update];
     });
+
+    await updatedUser.save();
+
     if (!updatedUser) {
       return res.sendStatus(404);
     }
