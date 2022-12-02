@@ -62,22 +62,9 @@ userRouter.get("/users/me", auth, async (req, res) => {
   res.send(req.user);
 });
 
-// userRouter.get("/users/:id", async (req, res) => {
-//   const _id = req.params.id;
-
-//   try {
-//     const user = await userModel.findById(_id);
-//     if (!user) {
-//       return res.status(404).send();
-//     }
-//     res.send(user);
-//   } catch (e) {
-//     res.status(500).send(e);
-//   }
-// });
 
 userRouter.patch("/users/me", auth, async (req, res) => {
-  const user = req.user;
+  const updatedUser = req.user;
   const data = req.body;
 
   const updates = Object.keys(data);
@@ -92,20 +79,13 @@ userRouter.patch("/users/me", auth, async (req, res) => {
   }
 
   try {
-    // const updatedUser = await userModel.findByIdAndUpdate(id, data, {
-    //   new: true,
-    //   runValidators: true,
-    // });
-
-    // const updatedUser = await userModel.findById(user);
-    
     updates.forEach((update) => {
-      user[update] = data[update];
+      updatedUser[update] = data[update];
     });
 
-    await user.save();
+    await updatedUser.save();
 
-    res.send(user);
+    res.send(updatedUser);
   } catch (e) {
     res.status(400).send(e);
   }
