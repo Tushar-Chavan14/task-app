@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { userModel } from "../db/models/usersModel.js";
-import auth from "./middleware/auth.js";
+import auth from "../middleware/auth.js";
 
 export const userRouter = Router();
 
@@ -61,22 +61,23 @@ userRouter.post("/users/logoutall", auth, async (req, res) => {
 userRouter.get("/users/me", auth, async (req, res) => {
   res.send(req.user);
 });
-userRouter.get("/users/:id", async (req, res) => {
-  const _id = req.params.id;
 
-  try {
-    const user = await userModel.findById(_id);
-    if (!user) {
-      return res.status(404).send();
-    }
-    res.send(user);
-  } catch (e) {
-    res.status(500).send(e);
-  }
-});
+// userRouter.get("/users/:id", async (req, res) => {
+//   const _id = req.params.id;
 
-userRouter.patch("/users/:id", async (req, res) => {
-  const id = req.params.id;
+//   try {
+//     const user = await userModel.findById(_id);
+//     if (!user) {
+//       return res.status(404).send();
+//     }
+//     res.send(user);
+//   } catch (e) {
+//     res.status(500).send(e);
+//   }
+// });
+
+userRouter.patch("/users/me", auth, async (req, res) => {
+  const user = req.user;
   const data = req.body;
 
   const updates = Object.keys(data);
@@ -87,7 +88,7 @@ userRouter.patch("/users/:id", async (req, res) => {
   );
 
   if (!isvalidopration) {
-    return res.status(400).send({ erro: "the update parameter does'nt exist" });
+    return res.status(400).send({ error: "the update parameter does'nt exist" });
   }
 
   try {
@@ -96,30 +97,25 @@ userRouter.patch("/users/:id", async (req, res) => {
     //   runValidators: true,
     // });
 
-    const updatedUser = await userModel.findById(id);
+    // const updatedUser = await userModel.findById(user);
+    
     updates.forEach((update) => {
-      updatedUser[update] = data[update];
+      user[update] = data[update];
     });
 
-    await updatedUser.save();
+    await user.save();
 
-    if (!updatedUser) {
-      return res.sendStatus(404);
-    }
-    res.send(updatedUser);
+    res.send(user);
   } catch (e) {
     res.status(400).send(e);
   }
 });
 
-userRouter.delete("/users/:id", async (req, res) => {
-  const id = req.params.id;
+userRouter.delete("/users/me", auth, async (req, res) => {
+  const user = req.user;
 
   try {
-    const delUser = await userModel.findByIdAndDelete(id);
-    if (!delUser) {
-      return res.status(404).send();
-    }
+    const delUser = await user.remove();
     res.send(delUser);
   } catch (e) {
     res.status(500);

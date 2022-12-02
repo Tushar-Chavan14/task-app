@@ -1,33 +1,36 @@
 import { Router } from "express";
 import { taskModel } from "../db/models/taskModel.js";
+import auth from "../middleware/auth.js";
 
 export const taskRouter = Router();
 
-taskRouter.post("/tasks", async (req, res) => {
-  const tasks = new taskModel(req.body);
+taskRouter.post("/tasks", auth, async (req, res) => {
+  // const tasks = new taskModel(req.body);
+
+  const tasks = new taskModel({ ...req.body, owner: req.user._id });
 
   try {
     const task = await tasks.save();
     res.status(201).send(task);
   } catch (e) {
-    res.sendStatus(400);
+    res.status(400).send(e);
   }
 });
 
-taskRouter.get("/tasks", async (req, res) => {
+taskRouter.get("/tasks", auth, async (req, res) => {
   try {
-    const tasks = await taskModel.find({});
+    const tasks = await taskModel.find({ owner: req.user._id });
     res.send(tasks);
   } catch (e) {
     res.sendStatus(500);
   }
 });
 
-taskRouter.get("/tasks/:id", async (req, res) => {
-  const id = req.params.id;
+taskRouter.get("/tasks/:id", auth, async (req, res) => {
+  const _id = req.params.id;
 
   try {
-    const task = await taskModel.findById(id);
+    const task = await taskModel.findOne({ _id, owner: req.user._id });
     if (!task) {
       return res.sendStatus(404);
     }
