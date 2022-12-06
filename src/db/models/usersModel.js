@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import validator from "validator";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { taskModel } from "./taskModel.js";
 
 const userSchema = mongoose.Schema({
   name: {
@@ -93,6 +94,12 @@ userSchema.pre("save", async function (next) {
   if (this.isModified("password")) {
     this.password = await bcrypt.hash(this.password, 8);
   }
+
+  next();
+});
+
+userSchema.pre("remove", async function (next) {
+  await taskModel.deleteMany({ owner: this._id });
 
   next();
 });
