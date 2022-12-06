@@ -3,7 +3,7 @@ import { userModel } from "../db/models/usersModel.js";
 
 const auth = async (req, res, next) => {
   try {
-    const token = req.headers.authorization;
+    const token = req.headers.authorization.replace("Bearer", "").trim();
     const verifiedToken = Jwt.verify(token, "secret");
 
     const user = await userModel.findOne({
@@ -15,7 +15,7 @@ const auth = async (req, res, next) => {
       throw new Error();
     }
 
-    req.token = token
+    req.token = token;
     req.user = user;
 
     next();
