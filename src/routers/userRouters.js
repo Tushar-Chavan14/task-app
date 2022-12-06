@@ -63,7 +63,7 @@ userRouter.get("/users/me", auth, async (req, res) => {
 });
 
 userRouter.patch("/users/me", auth, async (req, res) => {
-  const updatedUser = req.user;
+  const updateUser = req.user;
   const data = req.body;
 
   const updates = Object.keys(data);
@@ -74,17 +74,19 @@ userRouter.patch("/users/me", auth, async (req, res) => {
   );
 
   if (!isvalidopration) {
-    return res.status(400).send({ error: "the update parameter does'nt exist" });
+    return res
+      .status(400)
+      .send({ error: "the update parameter does'nt exist" });
   }
 
   try {
     updates.forEach((update) => {
-      updatedUser[update] = data[update];
+      updateUser[update] = data[update];
     });
 
-    await updatedUser.save();
+    await updateUser.save();
 
-    res.send(updatedUser);
+    res.send(updateUser);
   } catch (e) {
     res.status(400).send(e);
   }
