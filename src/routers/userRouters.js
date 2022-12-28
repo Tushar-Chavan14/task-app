@@ -1,6 +1,8 @@
 import { Router } from "express";
 import { userModel } from "../db/models/usersModel.js";
 import auth from "../middleware/auth.js";
+import multer from "multer";
+import sharp from "sharp";
 
 export const userRouter = Router();
 
@@ -101,4 +103,49 @@ userRouter.delete("/users/me", auth, async (req, res) => {
   } catch (e) {
     res.status(500);
   }
+});
+
+const upload = multer({
+  limits: {
+    fileSize: 1000000,
+  },
+  fileFilter(req, file, cb) {
+    if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
+      return cb(new Error("upload a image file"));
+    }
+
+    cb(undefined, true);
+  },
+});
+
+userRouter.post(
+  "/users/me/avatar",
+  auth,
+  upload.single("avatar"),
+  async (req, res) => {
+    const buffer = await sharp(req.file.buffer)
+      .resize({ width: 300, height: 300 })
+      .png()
+      .toBuffer();
+
+    req.user.avatar = buffer;
+    await req.user.save();
+
+    res.send({ sucess: "Profie uplaoded" });
+  },
+  (error, req, res, next) => {
+    res.status(400).send({ error: error.message });
+  }
+);
+
+userRouter.delete("/users/me/avatar", auth, async (req, res) => {
+  req.user.avatar = undefined;
+  await req.user.save();
+
+  res.send({ sucess: "profile removed" });
+});
+
+userRouter.get("/users/me/avatar", auth, async (req, res) => {
+  res.set("Content-Type", "image/png");
+  res.send(req.user.avatar);
 });
