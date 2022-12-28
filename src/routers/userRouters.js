@@ -3,6 +3,7 @@ import { userModel } from "../db/models/usersModel.js";
 import auth from "../middleware/auth.js";
 import multer from "multer";
 import sharp from "sharp";
+import { thankyouMail, welcomeMail } from "../emails/accounts.js";
 
 export const userRouter = Router();
 
@@ -11,6 +12,7 @@ userRouter.post("/users", async (req, res) => {
 
   try {
     await user.save();
+    welcomeMail(user.email);
     const token = await user.genrateAuthToken();
     res.status(201).send({ user, token });
   } catch (e) {
@@ -99,6 +101,7 @@ userRouter.delete("/users/me", auth, async (req, res) => {
 
   try {
     const delUser = await user.remove();
+    thankyouMail(user.email);
     res.send(delUser);
   } catch (e) {
     res.status(500);

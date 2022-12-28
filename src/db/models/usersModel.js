@@ -74,7 +74,7 @@ userSchema.methods.toJSON = function () {
 };
 
 userSchema.methods.genrateAuthToken = async function () {
-  const token = jwt.sign({ _id: this._id.toString() }, "secret");
+  const token = jwt.sign({ _id: this._id.toString() }, process.env.JWTsecret);
 
   this.tokens = this.tokens.concat({ token });
 
