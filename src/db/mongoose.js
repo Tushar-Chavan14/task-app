@@ -2,6 +2,12 @@ import mongoose from "mongoose";
 
 const connectionUrl = process.env.MongoDbUri;
 
-mongoose.connect(connectionUrl, {
-  useNewUrlParser: true,
-});
+export const connectDb = async () => {
+  try {
+    await mongoose.connect(connectionUrl, {
+      useNewUrlParser: true,
+    });
+  } catch (er) {
+    console.log(er);
+  }
+};

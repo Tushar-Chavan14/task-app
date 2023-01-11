@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import "./db/mongoose.js";
+import { connectDb } from "./db/mongoose.js";
 import { taskRouter } from "./routers/taskRouters.js";
 import { userRouter } from "./routers/userRouters.js";
 
@@ -16,4 +16,6 @@ app.use(express.json());
 app.use(userRouter);
 app.use(taskRouter);
 
-app.listen(port, () => console.log(`Example app listening on port ${port}!`));
+connectDb().then(
+  app.listen(port, () => console.log(`Example app listening on port ${port}!`))
+);
