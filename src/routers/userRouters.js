@@ -102,7 +102,7 @@ userRouter.delete("/users/me", auth, async (req, res) => {
   try {
     const delUser = await user.remove();
     thankyouMail(user.email);
-    res.send(delUser);
+    res.status(200).send(delUser);
   } catch (e) {
     res.status(500);
   }
