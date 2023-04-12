@@ -12,7 +12,7 @@ userRouter.post("/users", async (req, res) => {
 
   try {
     await user.save();
-    await welcomeMail(user.email);
+    welcomeMail(user.email);
     const token = await user.genrateAuthToken();
     res.status(201).send({ user, token });
   } catch (e) {
